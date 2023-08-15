@@ -18,7 +18,7 @@ type Socket struct {
 	connected bool
 }
 
-func (s *Socket) NewSocket(id string) *Socket {
+func (s *Socket) newSocket(id string) *Socket {
 	return &Socket{
 		id:        id,
 		connected: true,
@@ -31,7 +31,7 @@ type Connection struct {
 	conns map[*websocket.Conn]*Socket
 }
 
-func NewConnection() *Connection {
+func newConnection() *Connection {
 	return &Connection{
 		conns: map[*websocket.Conn]*Socket{},
 		mut:   sync.Mutex{},
@@ -41,14 +41,14 @@ func NewConnection() *Connection {
 func NewServer() *Server {
 	return &Server{
 		channels: map[string]*Connection{
-			"default": NewConnection(),
-			"feed":    NewConnection(),
+			"default": newConnection(),
+			"feed":    newConnection(),
 		},
 	}
 }
 
 func (s *Server) handleFeed(ws *websocket.Conn) {
-	fmt.Println("new incomming commectino to feed")
+	fmt.Println("new incomming connection to feed")
 	s.channels["feed"].mut.Lock()
 	s.channels["feed"].conns[ws].connected = true
 	s.channels["feed"].mut.Unlock()
@@ -84,7 +84,7 @@ func (s *Server) HandleWS(ws *websocket.Conn) {
 	_, ok := s.channels[channel]
 	if !ok {
 		fmt.Printf("channel %s does not exist. creating...\n", channel)
-		s.channels[channel] = NewConnection()
+		s.channels[channel] = newConnection()
 	}
 	s.channels[channel].mut.Lock()
 	s.channels[channel].conns[ws] = &Socket{
@@ -118,7 +118,7 @@ func (s *Server) broadcast(b []byte, channel string) {
 		go func(ws *websocket.Conn) {
 			if _, err := ws.Write(b); err != nil {
 				if _, ok := s.channels[channel].conns[ws]; ok {
-					fmt.Printf("in channel but not avaliable. deleting...")
+					fmt.Println("in channel but not avaliable. deleting...")
 					s.channels[channel].mut.Lock()
 					delete(s.channels[channel].conns, ws)
 					s.channels[channel].mut.Unlock()

@@ -2,26 +2,27 @@
 	import { onMount } from 'svelte';
 	let messageFeed: string[] = [''];
 	let myMessage: string = '';
-	let selectedChannel: string = 'global';
+	let channel_input_val: string = 'global';
 	let currentChannel: string = 'global';
 
 	let name: string = '';
 	let ws: WebSocket;
 	onMount(() => {
-		ws = new WebSocket('ws://localhost:3000/ws/' + selectedChannel);
+		setupWS();
+	});
+
+	const setupWS = () => {
+		ws = new WebSocket('ws://localhost:3000/ws/' + currentChannel);
 		ws.onmessage = (event) => {
 			messageFeed = [...messageFeed, event.data];
 		};
-	});
+	};
 
 	const changeWS = () => {
 		ws.close();
-		ws = new WebSocket('ws://localhost:3000/ws/' + selectedChannel);
-		ws.onmessage = (event) => {
-			messageFeed = [...messageFeed, event.data];
-		};
-		currentChannel = selectedChannel;
+		currentChannel = channel_input_val;
 		messageFeed = [];
+		setupWS();
 	};
 
 	const sendMessage = () => {
@@ -39,7 +40,7 @@
 <p>Listening on channel: {currentChannel}</p>
 
 <label for="channel">Channel:</label>
-<input id="channel" placeholder="write channel here" bind:value={selectedChannel} />
+<input id="channel" placeholder="write channel here" bind:value={channel_input_val} />
 <button on:click={changeWS}>Switch</button>
 
 <label for="name">Name:</label>
