@@ -15,8 +15,10 @@
 	};
 </script>
 
-<h1>Live Feed</h1>
+<div class="p-6">
+	<h1>Live Feed</h1>
 
-{#each messageFeed as message}
-	<p>{message}</p>
-{/each}
+	{#each messageFeed as message}
+		<p>{message}</p>
+	{/each}
+</div>
