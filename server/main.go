@@ -4,14 +4,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"golang.org/x/net/websocket"
 )
 
 func main() {
 	server := NewServer()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	http.Handle("/ws/", websocket.Handler(server.HandleWS))
+
 	go SpamFeed(server)
-	fmt.Println("starting server on port 3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+
+	fmt.Printf("starting server on port %s ... \n", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

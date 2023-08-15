@@ -12,7 +12,7 @@
 	});
 
 	const setupWS = () => {
-		ws = new WebSocket('ws://localhost:3000/ws/' + currentChannel);
+		ws = new WebSocket('wss://server-xcjt64gdjq-wm.a.run.app/ws/' + currentChannel);
 		ws.onmessage = (event) => {
 			messageFeed = [...messageFeed, event.data];
 		};
