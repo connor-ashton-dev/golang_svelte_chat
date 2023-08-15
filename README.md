@@ -2,6 +2,8 @@
 
 Realtime chat application.
 
-- Server is a Golang application that uses WebSockets to communicate with clients. No libraries are used.
+URL: https://golang-svelte-chat.vercel.app
 
-- Client is a Svelte application
+- Server is a Golang application hosted on Google Cloud Run that uses WebSockets to communicate with clients.
+
+- Client is a Svelte application hosted on Vercel.
