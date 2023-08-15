@@ -1,55 +1,38 @@
-<script lang="ts">
-	import { onMount } from 'svelte';
-	let messageFeed: string[] = [''];
-	let message: string = '';
-	let channelInputVal: string = 'global';
-	let currentChannel: string = 'global';
+<script>
+	import { goto } from '$app/navigation';
+	import { name, room } from '$lib/store';
 
-	let name: string = '';
-	let ws: WebSocket;
-	onMount(() => {
-		setupWS();
-	});
-
-	const setupWS = () => {
-		ws = new WebSocket('wss://server-xcjt64gdjq-wm.a.run.app/ws/' + currentChannel);
-		ws.onmessage = (event) => {
-			messageFeed = [...messageFeed, event.data];
-		};
-	};
-
-	const changeWS = () => {
-		ws.close();
-		currentChannel = channelInputVal;
-		messageFeed = [];
-		setupWS();
-	};
-
-	const sendMessage = () => {
-		if (!name) {
+	const handleClick = () => {
+		if ($name != '') {
+			if ($room == '') {
+				room.set('global');
+			}
+			goto('/chat');
+		} else {
 			alert('Please enter your name');
-			return;
 		}
-		ws.send(name + ': ' + message);
-		message = '';
 	};
 </script>
 
-<h1>Websocket chat</h1>
+<div class="w-screen h-screen flex flex-col items-center justify-center">
+	<h1 class="text-3xl pb-4">Welcome {$name}</h1>
+	<input
+		class="border border-black outline-none p-1 rounded-lg"
+		type="text"
+		placeholder="name here..."
+		bind:value={$name}
+	/>
+	<input
+		class="border border-black outline-none p-1 w-60 rounded-lg mt-2"
+		type="text"
+		placeholder="room here... (empty for global)"
+		bind:value={$room}
+	/>
 
-<p>Listening on channel: {currentChannel}</p>
-
-<label for="channel">Channel:</label>
-<input id="channel" placeholder="write channel here" bind:value={channelInputVal} />
-<button on:click={changeWS}>Switch</button>
-
-<label for="name">Name:</label>
-<input id="name" placeholder="write name here" bind:value={name} />
-
-<label for="message">Message:</label>
-<input id="message" placeholder="write message here" bind:value={message} />
-<button on:click={sendMessage}>Send</button>
-
-{#each messageFeed as message}
-	<p>{message}</p>
-{/each}
+	<div class="flex flex-row gap-4 py-2">
+		<button class="text-white bg-blue-500 p-2 rounded-lg" on:click={handleClick}
+			>Start chatting</button
+		>
+		<a class="text-white bg-blue-500 p-2 rounded-lg" href="/feed">Live feed</a>
+	</div>
+</div>
