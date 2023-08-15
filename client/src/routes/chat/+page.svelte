@@ -56,13 +56,13 @@
 				<p>{message}</p>
 			{/each}
 		</div>
-		<div class="w-full flex flex-row justify-center mb-60">
+		<div class="w-full flex flex-row justify-center lg:mb-60 sm:mb-10">
 			<input
 				class="border border-black outline-none p-1 rounded-l-lg"
 				placeholder="Send Message"
 				bind:value={message}
 			/>
-			<button class="text-white bg-blue-500 p-2 rounded-r-lg" on:click={sendMessage}>Change</button>
+			<button class="text-white bg-blue-500 p-2 rounded-r-lg" on:click={sendMessage}>Send</button>
 		</div>
 	</div>
 </div>
