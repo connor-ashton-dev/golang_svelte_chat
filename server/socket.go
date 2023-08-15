@@ -9,9 +9,35 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+// ------------------  SERVER  ------------------
 type Server struct {
-	channels map[string]*Connection
+	channels map[string]*Channel
 }
+
+func NewServer() *Server {
+	return &Server{
+		channels: map[string]*Channel{
+			"default": newChannel(),
+			"feed":    newChannel(),
+		},
+	}
+}
+
+// ------------------  CHANNEL  ------------------
+
+type Channel struct {
+	mut   sync.Mutex
+	conns map[*websocket.Conn]*Socket
+}
+
+func newChannel() *Channel {
+	return &Channel{
+		conns: map[*websocket.Conn]*Socket{},
+		mut:   sync.Mutex{},
+	}
+}
+
+// ------------------  SOCKET  ------------------
 
 type Socket struct {
 	id        string
@@ -26,54 +52,9 @@ func (s *Socket) newSocket(id string) *Socket {
 
 }
 
-type Connection struct {
-	mut   sync.Mutex
-	conns map[*websocket.Conn]*Socket
-}
+// ------------------  SOCKET HANDLERS  ------------------
 
-func newConnection() *Connection {
-	return &Connection{
-		conns: map[*websocket.Conn]*Socket{},
-		mut:   sync.Mutex{},
-	}
-}
-
-func NewServer() *Server {
-	return &Server{
-		channels: map[string]*Connection{
-			"default": newConnection(),
-			"feed":    newConnection(),
-		},
-	}
-}
-
-func (s *Server) handleFeed(ws *websocket.Conn) {
-	fmt.Println("new incomming connection to feed")
-	s.channels["feed"].mut.Lock()
-	s.channels["feed"].conns[ws].connected = true
-	s.channels["feed"].mut.Unlock()
-	s.readLoop(ws, "feed")
-}
-
-func SpamFeed(s *Server) {
-	greetings := []string{
-		"hello",
-		"hi",
-		"how are you",
-		"good",
-		"bad",
-		"ok",
-		"bye",
-		"goodbye",
-	}
-	for {
-		for _, greeting := range greetings {
-			s.broadcast([]byte(greeting), "feed")
-			time.Sleep(time.Second * 2)
-		}
-	}
-}
-
+// HandleWS handles websocket connections
 func (s *Server) HandleWS(ws *websocket.Conn) {
 	path := ws.Request().URL.Path //format = /ws/default
 	fmt.Println("new incomming connection from client: ", ws.RemoteAddr())
@@ -84,7 +65,7 @@ func (s *Server) HandleWS(ws *websocket.Conn) {
 	_, ok := s.channels[channel]
 	if !ok {
 		fmt.Printf("channel %s does not exist. creating...\n", channel)
-		s.channels[channel] = newConnection()
+		s.channels[channel] = newChannel()
 	}
 	s.channels[channel].mut.Lock()
 	s.channels[channel].conns[ws] = &Socket{
@@ -95,6 +76,7 @@ func (s *Server) HandleWS(ws *websocket.Conn) {
 	s.readLoop(ws, channel)
 }
 
+// readLoop reads messages from the client and broadcasts them to all other clients
 func (s *Server) readLoop(ws *websocket.Conn, channel string) {
 	buf := make([]byte, 1024)
 	for {
@@ -112,8 +94,8 @@ func (s *Server) readLoop(ws *websocket.Conn, channel string) {
 	}
 }
 
+// broadcast sends a message to all clients in a channel
 func (s *Server) broadcast(b []byte, channel string) {
-
 	for ws := range s.channels[channel].conns {
 		go func(ws *websocket.Conn) {
 			if _, err := ws.Write(b); err != nil {
@@ -127,5 +109,27 @@ func (s *Server) broadcast(b []byte, channel string) {
 				}
 			}
 		}(ws)
+	}
+}
+
+// ------------------  FEED  ------------------
+
+// SpamFeed sends a message to the feed channel every 2 seconds
+func SpamFeed(s *Server) {
+	greetings := []string{
+		"hello",
+		"hi",
+		"how are you",
+		"good",
+		"bad",
+		"ok",
+		"bye",
+		"goodbye",
+	}
+	for {
+		for _, greeting := range greetings {
+			s.broadcast([]byte(greeting), "feed")
+			time.Sleep(time.Second * 2)
+		}
 	}
 }
